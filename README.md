@@ -76,7 +76,7 @@ Pour le poteau, il s'agit d'une question/réponse dans WinPro :
 ![](images/poteau.png)
 
 <details>
-<summary>Réponse de WinPro à la requête ci-dessus :</summary>
+<summary>Réponse de WinPro à la requête ci-dessus</summary>
 
 ```xml
 <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/">
