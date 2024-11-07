@@ -10,7 +10,7 @@ Ce fichier contient des informations importantes à prendre en compte.
         - Portillon
             - -D / -G (Droit / Gauche)
             - -M (1 meneau)
-            - -B / -CDG / -CDGI (Bombé, Chapeau de gendarme, Chapeau de gendarme inversé)
+            - -B / -CDG (Bombé, Chapeau de gendarme)Z
         - Portail 2 vantaux
             - -D / -G (Droit / Gauche)
             - -B / -CDG / -CDGI / -BB / -BH (Bombé, Chapeau de gendarme, Chapeau de gendarme inversé, Biais bas, Biais haut)
@@ -31,4 +31,4 @@ Ce fichier contient des informations importantes à prendre en compte.
 
 ### Remplissage des vantaux
 
-- Déterminer, pour chaque modèle, quelles parties doivent être remplies avec la seconde couleur (par exemple : Vantail 1, partie 2).
+- Déterminer, pour chaque modèle et pour chaque ventail, le remplissage. Voir [remplissage_vantaux.json](./remplissage_vantaux.json).

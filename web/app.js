@@ -49,6 +49,10 @@ async function loadSpecs() {
                     row.addEventListener("click", () => {
                         document.getElementById("model").value = model; // Remplit le champ "Modèle"
                         updateCollection(); // Met à jour la collection
+                        // passer la classe active au modele dans le tableau
+                        const rows = document.querySelectorAll("tr");
+                        rows.forEach(row => row.classList.remove("active"));
+                        row.classList.add("active");
                     });
 
                     row.appendChild(cell);
@@ -129,11 +133,19 @@ async function sendRequest() {
     // Vérifier si le modèle est un modèle bicolor
     const isBicolor = specs.bicolor_fillings.includes(model);
 
-    // Trouver les vantaux correspondant au modèle (enlever le suffixe "-M" si présent)
-    const vantaux = specs.vantaux.filter(v => v.model === model.replace("-M", ""));
+    // Trouver les remplissages pour le modèle spécifié
+    const modelName = model.match(/^[A-Za-z]+/)[0];
+    const vantaux = specs.remplissage_vantail.filter(vantail => vantail.model === modelName);
 
-    // Trouver le nombre de panneaux
-    const nombre_panneaux = Math.max(...vantaux.map(v => v.leaf_id));
+    let remplissage_vantail1 = 0;
+    let remplissage_vantail2 = 0;
+
+    // Récupérer les remplissages pour les vantaux
+    if (vantaux.length > 0) {
+        ({ remplissage_vantail1, remplissage_vantail2 } = vantaux[0]);
+    }
+
+    const nombre_panneaux = 2;
 
     var transomXml = ''; // Initialiser le XML pour le poteau intermédiaire
 
@@ -164,13 +176,21 @@ async function sendRequest() {
                     <SASH_OPTION code="QQ_ferrage" value="${ferrage}" />\n
                     <DIRECTION>${sens}</DIRECTION>\n\n`;
 
-        // Si ce n'est pas un portillon (model contient "110"), remplir les 2 vantaux
         if (!model.includes("110")) {
-            vantaux.forEach(vant => {
-                sashXml += `                    <FILLING leaf_id="${vant.leaf_id}" filling_id="${vant.filling_id}">\n
-                                    <FILLING_INNER_COLOUR info="">${color2}</FILLING_INNER_COLOUR>\n
-                        </FILLING>\n\n`;
-            });
+            
+            for (let i = 0; i < remplissage_vantail1.length; i++) {
+                sashXml += `                    <FILLING leaf_id="1" filling_id="${remplissage_vantail1[i]}">\n
+                                <FILLING_INNER_COLOUR info="">${color2}</FILLING_INNER_COLOUR>\n
+                    </FILLING>\n\n`;
+            }
+        
+        
+            for (let i = 0; i < remplissage_vantail2.length; i++) {
+                sashXml += `                    <FILLING leaf_id="2" filling_id="${remplissage_vantail2[i]}">\n
+                                <FILLING_INNER_COLOUR info="">${color2}</FILLING_INNER_COLOUR>\n
+                    </FILLING>\n\n`;
+            }
+
         } else {
             sashXml += `                    <FILLING leaf_id="1" filling_id="2">\n
                                     <FILLING_INNER_COLOUR info="">${color2}</FILLING_INNER_COLOUR>\n
@@ -232,35 +252,33 @@ async function sendRequest() {
             if (model.includes("-B")) {
                 // Si le modèle est un modèle -B, C = 7514, E = B - C
                 var C = 7514
-                var E = height - C
-                // si le sens est 
-                var shapeXml = `<SHAPE id="5" c="${C}" e="${E}" />`;
-            } else if (model.includes("-CDG")) {
-                // Si le modèle est un modèle -CDG, C = 200, E = 1686, F = 1804, D = (width - 2329) / 4 + 15
+                var E = height - C;
+                // si le sens d'ouverture est à gauche, d = weight sinon d=0
+                if (sens_ouverture.includes("gauche")) {
+                    var D = width;
+                } else {
+                    var D = 0;
+                }
+                var shapeXml = `<SHAPE id="5" c="${C}" d="${D}" e="${E}" />`;
+            } else if (model.includes("-CDG") || sens_ouverture.includes("droite")) {
+                // Si le modèle est un modèle -CDG et ouverture droite, C = 200, E = 904, F = 786, D = (weight - 797.5) / 2 + 5
                 var C = 200;
-                var E = 1686;
-                var F = 1804;
-                var D = (width - 2329) / 4 + 15;
-                var shapeXml = `<SHAPE id="42" c="${C}" d="${D}" e="${E}" f="${F}" />`;
-            } else { // CDGI
-                // Si le modèle est un modèle -CDGI, C = -200, E = 1804, F = 1686, D = (width - 2329) / 4 + 15
-                var C = -200;
-                var E = 1804;
-                var F = 1686;
-                var D = (width - 2329) / 4 + 15;
-                var shapeXml = `<SHAPE id="42" c="${C}" d="${D}" e="${E}" f="${F}" />`;
+                var E = 904;
+                var F = 786;
+                var D = (width - 797.5) / 2 + 5;
+                var shapeXml = `<SHAPE id="3" c="${C}" d="${D}" e="${E}" f="${F}" />`;
+            } else if (model.includes("-CDG") || sens_ouverture.includes("gauche")) {
+                // Si le modèle est un modèle -CDG et ouverture gauche, C = 200, E = 786, F = 904, D = (weight - 797.5) / 2 - 5
+                var C = 200;
+                var E = 786;
+                var F = 904;
+                var D = (width - 797.5) / 2 - 5;
+                var shapeXml = `<SHAPE id="3" c="${C}" d="${D}" e="${E}" f="${F}" />`;
             }
 
         } else {
             var shapeXml = '';
         }
-    }
-
-    // ajuster l'orientation pour les portillons
-    if (sens_ouverture.includes("gauche") && model.includes("110")) {
-        shapeXml = shapeXml.replace('c=', 'd="' + width + '" c=');
-    } else if (sens_ouverture.includes("droite") && model.includes("110")) {
-        shapeXml = shapeXml.replace('c=', 'd="0" c=');
     }
 
     // Construire le XML pour les profils périphériques
