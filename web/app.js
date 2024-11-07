@@ -112,7 +112,6 @@ async function sendRequest() {
     const collection = getValue('collection');
     var model = getValue('model'); // car le modèle peut être modifié sellon l'aspect
     const pose = getValue('pose');
-    const sens = getValue('sens');
     const sens_ouverture = getValue('sens_ouverture');
     const poteau_gauche = getValue('poteau_gauche');
     const poteau_droit = getValue('poteau_droit');
@@ -124,10 +123,13 @@ async function sendRequest() {
     const numeroRue = getValue('numero');
     const aspect = getValue('aspect');
 
+    // Déterminer le sens
+    const sens = sens_ouverture.includes("gauche") ? "1" : "0";
+
     // Vérifier si le modèle est un modèle bicolor
     const isBicolor = specs.bicolor_fillings.includes(model);
 
-    // Trouver les vantaux correspondant au modèle (enlver le suffixe "-M" si présent)
+    // Trouver les vantaux correspondant au modèle (enlever le suffixe "-M" si présent)
     const vantaux = specs.vantaux.filter(v => v.model === model.replace("-M", ""));
 
     // Trouver le nombre de panneaux
@@ -162,11 +164,18 @@ async function sendRequest() {
                     <SASH_OPTION code="QQ_ferrage" value="${ferrage}" />\n
                     <DIRECTION>${sens}</DIRECTION>\n\n`;
 
-        vantaux.forEach(vant => {
-            sashXml += `                    <FILLING leaf_id="${vant.leaf_id}" filling_id="${vant.filling_id}">\n
-                                <FILLING_INNER_COLOUR info="">${color2}</FILLING_INNER_COLOUR>\n
-                    </FILLING>\n\n`;
-        });
+        // Si ce n'est pas un portillon (model contient "110"), remplir les 2 vantaux
+        if (!model.includes("110")) {
+            vantaux.forEach(vant => {
+                sashXml += `                    <FILLING leaf_id="${vant.leaf_id}" filling_id="${vant.filling_id}">\n
+                                    <FILLING_INNER_COLOUR info="">${color2}</FILLING_INNER_COLOUR>\n
+                        </FILLING>\n\n`;
+            });
+        } else {
+            sashXml += `                    <FILLING leaf_id="1" filling_id="2">\n
+                                    <FILLING_INNER_COLOUR info="">${color2}</FILLING_INNER_COLOUR>\n
+                        </FILLING>\n\n`;
+        }
 
         sashXml += transomXml; // Ajouter le poteau intermédiaire si nécessaire
 
@@ -174,44 +183,84 @@ async function sendRequest() {
         return sashXml;
     };
 
-    // Ajuster les dimensions pour les modèles B, BH, BB, B, CDG et CDGI
-    if (model.endsWith("-B") || model.endsWith("-BB") || model.endsWith("-BH") || model.endsWith("-CDG") || model.endsWith("-CDGI")) {
-        console.log("Ajustement des dimensions pour le modèle:", model);
+    // Si le modèle n'est pas un portillon
+    if (!model.includes("110")) {
+        // Ajuster les dimensions pour les modèles B, BH, BB, B, CDG et CDGI
+        if (model.endsWith("-B") || model.endsWith("-BB") || model.endsWith("-BH") || model.endsWith("-CDG") || model.endsWith("-CDGI")) {
+            console.log("Ajustement des dimensions pour le modèle:", model);
 
-        if (model.endsWith("-BH")) {
-            // Si le modèle est un modèle -BH ou -BB, C = width/2, D = C * Tangeant(7°) et E = C * Tangeant(7°)
-            var C = width / 2;
-            var D = C * Math.tan(7 * Math.PI / 180);
-            var E = C * Math.tan(7 * Math.PI / 180);
-            var shapeXml = `<SHAPE id="16" c="${C}" d="${D}" e="${E}" />`;
-        } else if (model.endsWith("-BB")) {
-            // Si le modèle est un modèle -BH ou -BB, C = width/2, D = - (C * Tangeant(7°)) et E = - (C * Tangeant(7°))
-            var C = width / 2;
-            var D = - (C * Math.tan(7 * Math.PI / 180));
-            var E = - (C * Math.tan(7 * Math.PI / 180));
-            var shapeXml = `<SHAPE id="16" c="${C}" d="${D}" e="${E}" />`;
-        } else if (model.endsWith("-B")) {
-            // Si le modèle est un modèle -B, C = 7514 * (1 - racine(1 - (width^2/4*7514^2)))
-            var C = 7514 * (1 - Math.sqrt(1 - (width ** 2 / (4 * 7514 ** 2))));
-            var shapeXml = `<SHAPE id="8" c="${C}" />`;
-        } else if (model.endsWith("-CDG")) {
-            // Si le modèle est un modèle -CDG, C = 200, E = 1686, F = 1804, D = (width - 2329) / 4 + 15
-            var C = 200;
-            var E = 1686;
-            var F = 1804;
-            var D = (width - 2329) / 4 + 15;
-            var shapeXml = `<SHAPE id="42" c="${C}" d="${D}" e="${E}" f="${F}" />`;
-        } else { // CDGI
-            // Si le modèle est un modèle -CDGI, C = -200, E = 1804, F = 1686, D = (width - 2329) / 4 + 15
-            var C = -200;
-            var E = 1804;
-            var F = 1686;
-            var D = (width - 2329) / 4 + 15;
-            var shapeXml = `<SHAPE id="42" c="${C}" d="${D}" e="${E}" f="${F}" />`;
+            if (model.endsWith("-BH")) {
+                // Si le modèle est un modèle -BH ou -BB, C = width/2, D = C * Tangeant(7°) et E = C * Tangeant(7°)
+                var C = width / 2;
+                var D = C * Math.tan(7 * Math.PI / 180);
+                var E = C * Math.tan(7 * Math.PI / 180);
+                var shapeXml = `<SHAPE id="16" c="${C}" d="${D}" e="${E}" />`;
+            } else if (model.endsWith("-BB")) {
+                // Si le modèle est un modèle -BH ou -BB, C = width/2, D = - (C * Tangeant(7°)) et E = - (C * Tangeant(7°))
+                var C = width / 2;
+                var D = - (C * Math.tan(7 * Math.PI / 180));
+                var E = - (C * Math.tan(7 * Math.PI / 180));
+                var shapeXml = `<SHAPE id="16" c="${C}" d="${D}" e="${E}" />`;
+            } else if (model.endsWith("-B")) {
+                // Si le modèle est un modèle -B, C = 7514 * (1 - racine(1 - (width^2/4*7514^2)))
+                var C = 7514 * (1 - Math.sqrt(1 - (width ** 2 / (4 * 7514 ** 2))));
+                var shapeXml = `<SHAPE id="8" c="${C}" />`;
+            } else if (model.endsWith("-CDG")) {
+                // Si le modèle est un modèle -CDG, C = 200, E = 1686, F = 1804, D = (width - 2329) / 4 + 15
+                var C = 200;
+                var E = 1686;
+                var F = 1804;
+                var D = (width - 2329) / 4 + 15;
+                var shapeXml = `<SHAPE id="42" c="${C}" d="${D}" e="${E}" f="${F}" />`;
+            } else { // CDGI
+                // Si le modèle est un modèle -CDGI, C = -200, E = 1804, F = 1686, D = (width - 2329) / 4 + 15
+                var C = -200;
+                var E = 1804;
+                var F = 1686;
+                var D = (width - 2329) / 4 + 15;
+                var shapeXml = `<SHAPE id="42" c="${C}" d="${D}" e="${E}" f="${F}" />`;
+            }
+
+        } else {
+            var shapeXml = '';
         }
+    } else { // Si le modèle est un portillon
+        // Ajuster les dimensions pour les modèles B, BH, BB, B, CDG et CDGI
+        if (model.includes("-B") || model.includes("-CDG") || model.includes("-CDGI")) {
+            console.log("Ajustement des dimensions pour le modèle:", model);
 
-    } else {
-        var shapeXml = '';
+            if (model.includes("-B")) {
+                // Si le modèle est un modèle -B, C = 7514, E = B - C
+                var C = 7514
+                var E = height - C
+                // si le sens est 
+                var shapeXml = `<SHAPE id="5" c="${C}" e="${E}" />`;
+            } else if (model.includes("-CDG")) {
+                // Si le modèle est un modèle -CDG, C = 200, E = 1686, F = 1804, D = (width - 2329) / 4 + 15
+                var C = 200;
+                var E = 1686;
+                var F = 1804;
+                var D = (width - 2329) / 4 + 15;
+                var shapeXml = `<SHAPE id="42" c="${C}" d="${D}" e="${E}" f="${F}" />`;
+            } else { // CDGI
+                // Si le modèle est un modèle -CDGI, C = -200, E = 1804, F = 1686, D = (width - 2329) / 4 + 15
+                var C = -200;
+                var E = 1804;
+                var F = 1686;
+                var D = (width - 2329) / 4 + 15;
+                var shapeXml = `<SHAPE id="42" c="${C}" d="${D}" e="${E}" f="${F}" />`;
+            }
+
+        } else {
+            var shapeXml = '';
+        }
+    }
+
+    // ajuster l'orientation pour les portillons
+    if (sens_ouverture.includes("gauche") && model.includes("110")) {
+        shapeXml = shapeXml.replace('c=', 'd="' + width + '" c=');
+    } else if (sens_ouverture.includes("droite") && model.includes("110")) {
+        shapeXml = shapeXml.replace('c=', 'd="0" c=');
     }
 
     // Construire le XML pour les profils périphériques

@@ -16,6 +16,10 @@
       "NUBI210"
     ],
 
+    "models110": [
+        "ALTA110", "ARCE110", "ARCEN110-G", "ESPA110-B-D"
+    ],
+
     "models210": [
         "ALTA210", "ANTA210", "ANTAR210", "ARCE210", "ARCT210", "ASTR210-CDGI", 
         "ASTR210-B", "ASTR210-CDG", "ASTR210-CDG-PTLG", "ATAC210", "ATLA210", "ATRI210", 
