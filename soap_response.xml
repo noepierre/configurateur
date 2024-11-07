@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"><SOAP-ENV:Body SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:NS1="urn:Webshopv1-IWebshopv1"><NS1:webshopResponse><return xsi:type="xsd:string">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;ANSWER_FROM_WINPRO&gt;
+&lt;REQUEST_ID&gt;ABC53E47095932148B89409FFB3789450527328E&lt;/REQUEST_ID&gt;
+&lt;WINPRO_ID&gt;666B8702B19264B185FFEEF70B18605B06547368&lt;/WINPRO_ID&gt;
+&lt;ERROR_CODE&gt;2&lt;/ERROR_CODE&gt;
+&lt;ERROR_MESSAGE&gt;Library item not found&lt;/ERROR_MESSAGE&gt;
+&lt;/ANSWER_FROM_WINPRO&gt;
+</return></NS1:webshopResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>
