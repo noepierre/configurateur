@@ -109,7 +109,7 @@ function toggleActive(buttonNumber) {
 async function sendRequest() {
     const getValue = (id) => document.getElementById(id).value;
     const color1 = getValue('color1');
-    const color2 = getValue('color2');
+    var color2 = getValue('color2');
     const width = getValue('width');
     const height = getValue('height');
     const width2 = getValue('width2');
@@ -132,6 +132,11 @@ async function sendRequest() {
 
     // Vérifier si le modèle est un modèle bicolor
     const isBicolor = specs.bicolor_fillings.includes(model);
+
+    // si la couleur 2 est vide, on affecte la couleur 1 à la couleur 2
+    if (color2 === "") {
+        color2 = color1;
+    }
 
     // Trouver les remplissages pour le modèle spécifié
     const modelName = model.match(/^[A-Za-z]+/)[0];
