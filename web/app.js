@@ -150,7 +150,7 @@ async function sendRequest() {
         ({ remplissage_vantail1, remplissage_vantail2 } = vantaux[0]);
     }
 
-    const nombre_panneaux = 2;
+    var nombre_panneaux = 2;
 
     var transomXml = ''; // Initialiser le XML pour le poteau intermédiaire
 
@@ -171,6 +171,28 @@ async function sendRequest() {
 
         transomXml = `              <TRANSOM transom_id="1" leaf_id="1" filling_id="1" pos="W / 2" code="ALU ASPECT 2VTX" info="" masonry="1" />`;
     }
+
+    // Si le modèle est de type '310' et qu'il existe des remplissages pour ce modèle
+    if (model.includes("310") && specs.remplissage_vantail.some(vantail => vantail.model === modelName)) {
+        // Modèle 310 n'a qu'un seul vantail
+        let nombre_panneaux = 1;
+
+        // Fusionner les remplissages du vantail 2 dans le vantail 1 pour les modèles '310'
+        // Exemple : si remplissage_vantail1 = [2] et remplissage_vantail2 = [2], le résultat sera remplissage_vantail1 = [2, 4]
+        
+        // Trouver le plus grand remplissage existant dans les deux vantaux
+        const maxRemplissage1 = Math.max(...remplissage_vantail1, 0); // Si vide, renvoie 0
+        const maxRemplissage2 = Math.max(...remplissage_vantail2, 0);
+        const maxRemplissage = Math.max(maxRemplissage1, maxRemplissage2);
+
+        // Ajouter les éléments de remplissage_vantail2 avec un décalage pour les fusionner dans remplissage_vantail1
+        remplissage_vantail1 = remplissage_vantail1.concat(
+            remplissage_vantail2.map(value => value + maxRemplissage)
+        );
+        // Vider le remplissage du vantail 2 car tout est transféré dans le vantail 1
+        remplissage_vantail2 = [];
+    }
+
 
     // Construire le XML pour les vantaux
     const buildSashXml = () => {
@@ -261,24 +283,36 @@ async function sendRequest() {
                 // si le sens d'ouverture est à gauche, d = weight sinon d=0
                 if (sens_ouverture.includes("gauche")) {
                     var D = width;
+
+                    // ajouter -D à la fin du modèle
+                    model = model + "-G";
                 } else {
                     var D = 0;
+
+                    // ajouter -G à la fin du modèle
+                    model = model + "-D";
                 }
                 var shapeXml = `<SHAPE id="5" c="${C}" d="${D}" e="${E}" />`;
-            } else if (model.includes("-CDG") || sens_ouverture.includes("droite")) {
+            } else if (model.includes("-CDG") && sens_ouverture.includes("droite")) {
                 // Si le modèle est un modèle -CDG et ouverture droite, C = 200, E = 904, F = 786, D = (weight - 797.5) / 2 + 5
                 var C = 200;
                 var E = 904;
                 var F = 786;
                 var D = (width - 797.5) / 2 + 5;
-                var shapeXml = `<SHAPE id="3" c="${C}" d="${D}" e="${E}" f="${F}" />`;
-            } else if (model.includes("-CDG") || sens_ouverture.includes("gauche")) {
-                // Si le modèle est un modèle -CDG et ouverture gauche, C = 200, E = 786, F = 904, D = (weight - 797.5) / 2 - 5
+                var shapeXml = `<SHAPE id="43" orientation="1" c="${C}" d="${D}" e="${E}" f="${F}" />`;
+
+                // ajouter -D à la fin du modèle
+                model = model + "-D";
+            } else if (model.includes("-CDG") && sens_ouverture.includes("gauche")) {
+                // Si le modèle est un modèle -CDG et ouverture gauche, C = 200, E = 786, F = 904, D = (weight - 797.5) / 2 - 5*
                 var C = 200;
                 var E = 786;
                 var F = 904;
                 var D = (width - 797.5) / 2 - 5;
-                var shapeXml = `<SHAPE id="3" c="${C}" d="${D}" e="${E}" f="${F}" />`;
+                var shapeXml = `<SHAPE id="43" orientation="-1" c="${C}" d="${D}" e="${E}" f="${F}" />`;
+
+                // ajouter -G à la fin du modèle
+                model = model + "-G";
             }
 
         } else {
@@ -368,6 +402,11 @@ async function sendRequest() {
 
         if (!response.ok) {
             const errorText = await response.text();
+
+            // afficher le message d'erreur dans le conteneur d'image
+            const imageContainer = document.getElementById("imageContainer");
+            imageContainer.innerHTML = `<h2>${errorText}</h2>`;
+
             throw new Error(`Erreur lors de l'envoi de la requête : ${errorText}`);
         }
 

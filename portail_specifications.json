@@ -17,7 +17,7 @@
     ],
 
     "models110": [
-        "ALTA110", "ARCE110", "ESPA110-B-D", "ASTR110-CDG-D"
+        "ALTA110", "ARCE110", "ESPA110-B", "ASTR110-CDG"
     ],
 
     "models210": [
@@ -99,6 +99,7 @@
         "VONA210": "ELEG AJOURE 200",
         "AURO110-G": "ELEG CINTRE 100",
         "AURO110": "ELEG CINTRE 100",
+        "ASTR110-CDG": "ELEG CINTRE 100",
         "ASTR110-CDG-D": "ELEG CINTRE 100",
         "ASTR110-CDG-G": "ELEG CINTRE 100",
         "ASTR110-B-D": "ELEG CINTRE 100",
@@ -111,6 +112,7 @@
         "ETIN110-B-G": "ELEG CINTRE 100",
         "ETIN110-CDG-D": "ELEG CINTRE 100",
         "ETIN110-CDG-G": "ELEG CINTRE 100",
+        "ESPA110-B": "ELEG CINTRE 100",
         "ESPA110-B-D": "ELEG CINTRE 100",
         "ESPA110-B-G": "ELEG CINTRE 100",
         "ESPA110-CDG-D": "ELEG CINTRE 100",
