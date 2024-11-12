@@ -462,53 +462,64 @@ async function sendRequest() {
             imageContainer.appendChild(svgElement);
         }
 
-        // executer la requête pour obtenir l'image en format PNG
-        const downloadSvgAsPng = async (svgElement) => {
-            const requestXmlPNG = buildRequestXmlPNG(sashXml);
-            const soapEnvelopePNG = buildSoapEnvelope(requestXmlPNG);
+        // fonction pour passer du svg au png
+        function downloadSvgAsPng(svgElement) {
+            const svgContent = new XMLSerializer().serializeToString(svgElement);
+            const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
 
-            const responsePNG = await fetch("http://localhost:3000/sendSoapRequest", {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/xml' },
-                body: soapEnvelopePNG,
-            });
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            const image = new Image();
 
-            if (!responsePNG.ok) {
-                const errorText = await responsePNG.text();
-                throw new Error(`Erreur lors de l'envoi de la requête : ${errorText}`);
-            }
+            image.onload = () => {
+                canvas.width = image.width;
+                canvas.height = image.height;
+                context.drawImage(image, 0, 0);
 
-            const responseTextPNG = await responsePNG.text();
-            
-            // le contenu de l'image en format base64 est dans la balise <DRAWING>
-            // il faut d'abord remplacer les caractères spéciaux
-            const base64Image = responseTextPNG.replace(/&lt;/g, '<')
-                .replace(/&gt;/g, '>')
-                .replace(/&amp;/g, '&')
-                .replace(/ onmouseenter="WPitemEnter\(this\)"/g, "")
-                .replace(/ onmouseleave="WPitemLeave\(this\)"/g, "")
-                .replace(/ onclick="WPitemClick\(this\)"/g, "")
+                const a = document.createElement('a');
+                a.href = canvas.toDataURL('image/png');
+                a.download = 'image.png';
 
-            // extraire le contenu de la balise <DRAWING>
-            const startIndex = base64Image.indexOf('<DRAWING>') + '<DRAWING>'.length;
-            const endIndex = base64Image.indexOf('</DRAWING>', startIndex);
-            const base64ImageContent = base64Image.slice(startIndex, endIndex);
+                const confirmation = confirm("L'image PNG va être téléchargée.");
+                if (!confirmation) {
+                    return;  // Si l'utilisateur annule, on arrête l'exécution
+                }
 
-            // Telecharger l'image en format PNG
-            const a = document.createElement('a');
-            a.href = `data:image/png;base64,${base64ImageContent}`;
-            a.download = 'image.png';
-            a.click();
+                a.click();
+            };
 
-            console.log("Image en format base64:", base64ImageContent);
+            image.src = url;
         }
 
-        // ajout d'un bouton pour télécharger le SVG
+        // ajout d'un bouton pour télécharger le PNG
         const downloadButton = document.createElement("div");
         downloadButton.className = "download-button";
         downloadButton.textContent = "Télécharger au format PNG";
         downloadButton.addEventListener('click', () => {downloadSvgAsPng(svgElement);});
         imageContainer.appendChild(downloadButton);
+
+        // ajout d'un bouton pour télécharger le SVG
+        const downloadButtonSVG = document.createElement("div");
+        downloadButtonSVG.className = "download-button";
+        downloadButtonSVG.textContent = "Télécharger au format SVG";
+        downloadButtonSVG.addEventListener('click', () => {
+            const svgContent = new XMLSerializer().serializeToString(svgElement);
+            const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'image.svg';
+
+            const confirmation = confirm("L'image SVG va être téléchargée.");
+            if (!confirmation) {
+                return;  // Si l'utilisateur annule, on arrête l'exécution
+            }
+
+            a.click();
+        });
+        imageContainer.appendChild(downloadButtonSVG);
 
         console.log("Réponse SOAP reçue:", responseText);
     } catch (error) {

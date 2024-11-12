@@ -10,7 +10,6 @@ Ce projet vise à établir un lien entre WinPro et une page web, permettant d'in
 - WebShop
 - SOAP UI (pour tester l'API et comprendre son fonctionnement)
 - Node.js et npm
-- Un éditeur de code
 
 ## Installation
 
@@ -57,3 +56,4 @@ Ce projet vise à établir un lien entre WinPro et une page web, permettant d'in
 - Affiche les modèles de portails disponibles.
 - Formulaire pour configurer le portail et envoyer une requête SOAP.
 - Affiche l'image SVG du portail configuré.
+- Possibilité de télécharger l'image PNG ou le fichier SVG.
