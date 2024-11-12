@@ -368,6 +368,38 @@ async function sendRequest() {
         </REQUEST_TO_WINPRO>`;
     };
 
+    // Construire le XML pour la requête en format PNG
+    const buildRequestXmlPNG = (sashXml) => {
+        return `
+        <REQUEST_TO_WINPRO>
+            <REQUEST_TYPE>0</REQUEST_TYPE>
+            <LIBRARY>${collection}</LIBRARY>
+            <ITEM>${model}</ITEM>
+            <IMAGE type="png" view="reverse" />
+            <DIMENSION_LINES>0</DIMENSION_LINES>
+            <CONFIGS>
+                <CONFIG>
+                    <WIDTH>${width}</WIDTH>
+                    <HEIGHT>${height}</HEIGHT>
+                    ${shapeXml}
+                    <COLOUR>${color1}</COLOUR>\n
+                    ${isBicolor ? `<FILLING_INNER_COLOUR info="">${color2}</FILLING_INNER_COLOUR>\n` : ''}
+                    
+                    ${sashXml}
+
+                    ${peripheralProfileXml}                    
+                    
+                    <OPTION code="QD_ControleCoheL" value="QD_ControleCoheL_non" />
+                    <OPTION code="QD_typepose" value="${pose}" />
+                    <OPTION code="QD_sensouv" value="${sens_ouverture}" />
+                    <OPTION code="QD_poteauG" value="${poteau_gauche}" />
+                    <OPTION code="QD_poteauD" value="${poteau_droit}" />
+                </CONFIG>
+            </CONFIGS>
+            <GET_CONFIG type="1"/>
+        </REQUEST_TO_WINPRO>`;
+    };
+
     // Affichage de la requête XML
     console.log("Requête XML:");
     console.log(buildRequestXml(buildSashXml()));
@@ -430,6 +462,54 @@ async function sendRequest() {
             imageContainer.appendChild(svgElement);
         }
 
+        // executer la requête pour obtenir l'image en format PNG
+        const downloadSvgAsPng = async (svgElement) => {
+            const requestXmlPNG = buildRequestXmlPNG(sashXml);
+            const soapEnvelopePNG = buildSoapEnvelope(requestXmlPNG);
+
+            const responsePNG = await fetch("http://localhost:3000/sendSoapRequest", {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/xml' },
+                body: soapEnvelopePNG,
+            });
+
+            if (!responsePNG.ok) {
+                const errorText = await responsePNG.text();
+                throw new Error(`Erreur lors de l'envoi de la requête : ${errorText}`);
+            }
+
+            const responseTextPNG = await responsePNG.text();
+            
+            // le contenu de l'image en format base64 est dans la balise <DRAWING>
+            // il faut d'abord remplacer les caractères spéciaux
+            const base64Image = responseTextPNG.replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&amp;/g, '&')
+                .replace(/ onmouseenter="WPitemEnter\(this\)"/g, "")
+                .replace(/ onmouseleave="WPitemLeave\(this\)"/g, "")
+                .replace(/ onclick="WPitemClick\(this\)"/g, "")
+
+            // extraire le contenu de la balise <DRAWING>
+            const startIndex = base64Image.indexOf('<DRAWING>') + '<DRAWING>'.length;
+            const endIndex = base64Image.indexOf('</DRAWING>', startIndex);
+            const base64ImageContent = base64Image.slice(startIndex, endIndex);
+
+            // Telecharger l'image en format PNG
+            const a = document.createElement('a');
+            a.href = `data:image/png;base64,${base64ImageContent}`;
+            a.download = 'image.png';
+            a.click();
+
+            console.log("Image en format base64:", base64ImageContent);
+        }
+
+        // ajout d'un bouton pour télécharger le SVG
+        const downloadButton = document.createElement("div");
+        downloadButton.className = "download-button";
+        downloadButton.textContent = "Télécharger au format PNG";
+        downloadButton.addEventListener('click', () => {downloadSvgAsPng(svgElement);});
+        imageContainer.appendChild(downloadButton);
+
         console.log("Réponse SOAP reçue:", responseText);
     } catch (error) {
         console.error("Erreur lors de l'envoi de la requête:", error);
@@ -473,12 +553,14 @@ function extractSvgAndAdjustViewBox(xmlContent, width, height) {
         // Ajuster la viewBox
         const viewBox = `${minX} ${minY} ${maxX - minX} ${maxY - minY}`;
         svgElement.setAttribute("viewBox", viewBox);
+
         return svgElement;
     } else {
         console.error("Aucun élément SVG trouvé dans la réponse.");
         return null;
     }
 }
+
 
 // Charger les spécifications à l'ouverture de la page
 loadSpecs();
