@@ -134,6 +134,7 @@ button:hover {
 svg {
     max-width: 100%;
     height: auto;
+    padding : 50px;
 }
 
 .download-button {

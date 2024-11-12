@@ -1,10 +1,9 @@
 let specs = {};
 
-
-
 // Fonction pour charger les spécifications au chargement de la page
 async function loadSpecs() {
     try {
+        // Récupère les spécifications depuis le serveur
         const response = await fetch("http://localhost:3000/portail-specifications");
         if (!response.ok) {
             throw new Error("Erreur lors de la récupération des spécifications");
@@ -12,14 +11,13 @@ async function loadSpecs() {
         
         specs = await response.json();
 
-        // Afficher les modèles dans le tableau
+        // Sélection de l'élément de la liste des portails
         const portalListElement = document.getElementById("portalList");
 
-        // Liste des boutons à vérifier
+        // Liste des identifiants de boutons à vérifier
         const buttons = ["110", "210", "310", "510"];
         
-        // 110 : Portillons, 210 : Portails 2 vantaux, 310 : Portails coulissants, 510 : Portails coulissants 2 vantaux
-        // On va attribuer les modèles correspondants à chaque bouton
+        // Descriptions des boutons pour chaque type de portail
         const descriptions = {
             "110": "Portillons",
             "210": "Portails 2 vantaux",
@@ -27,31 +25,32 @@ async function loadSpecs() {
             "510": "Portails coulissants 2 vantaux",
         };
 
-        // Récupérer la description correspondant au bouton actif
-        const description = descriptions[buttons.find(buttonId => document.getElementById(buttonId).classList.contains("active"))];
+        // Récupère la description correspondant au bouton actif
+        const activeButtonId = buttons.find(buttonId => document.getElementById(buttonId).classList.contains("active"));
+        const description = descriptions[activeButtonId];
 
-        // Effacer le contenu actuel de la liste (si nécessaire)
+        // Efface le contenu actuel de la liste des portails
         portalListElement.innerHTML = "";
 
-        // Vérifier chaque bouton et charger les modèles correspondants
+        // Vérifie chaque bouton et charge les modèles correspondants
         buttons.forEach(buttonId => {
             if (document.getElementById(buttonId).classList.contains("active")) {
-                const models = specs[`models${buttonId}`] || []; // Accès à la clé `models{buttonId}`
+                // Récupère les modèles associés au bouton actif
+                const models = specs[`models${buttonId}`] || [];
 
-                // Ajouter chaque modèle dans une ligne du tableau avec un événement de clic
+                // Ajoute chaque modèle à la liste des portails
                 models.forEach(model => {
                     const row = document.createElement("tr");
                     const cell = document.createElement("td");
                     cell.className = "col1";
                     cell.textContent = model;
 
-                    // Ajoute l'événement de clic
+                    // Ajoute un événement de clic pour chaque modèle
                     row.addEventListener("click", () => {
-                        document.getElementById("model").value = model; // Remplit le champ "Modèle"
+                        document.getElementById("model").value = model; // Remplie le champ "Modèle"
                         updateCollection(); // Met à jour la collection
-                        // passer la classe active au modele dans le tableau
-                        const rows = document.querySelectorAll("tr");
-                        rows.forEach(row => row.classList.remove("active"));
+                        // Passe la classe 'active' au modèle dans le tableau
+                        document.querySelectorAll("tr").forEach(row => row.classList.remove("active"));
                         row.classList.add("active");
                     });
 
@@ -59,11 +58,11 @@ async function loadSpecs() {
                     portalListElement.appendChild(row);
                 });
 
-                // Mettre à jour la description
+                // Met à jour la description en fonction du bouton actif
                 const descriptionElement = document.getElementById("description");
                 descriptionElement.innerHTML = `<h2>${description}</h2>`;
 
-                // Mettre à jour la collection
+                // Met à jour la collection
                 updateCollection();
             }
         });
@@ -72,36 +71,30 @@ async function loadSpecs() {
     }
 }
 
-
-
-
-// Mettre à jour la collection basée sur le modèle
+// Met à jour la collection en fonction du modèle sélectionné
 function updateCollection() {
     const modelInput = document.getElementById('model').value;
     const collectionInput = document.getElementById('collection');
 
-    // Si le modele contient "210", la collection est "WEB_ELEG_2VTX"
+    // Si le modèle contient "210", on définit la collection à "WEB_ELEG_2VTX"
     if (modelInput.includes("210")) {
         collectionInput.value = "WEB_ELEG_2VTX";
-        
     } else {
-        // Rechercher la collection correspondant au modèle
-        const collection = specs.model_collections[modelInput] || ''; // Ou valeur par défaut
-        
-        // Mettre à jour la valeur de la collection
+        // Recherche la collection correspondant au modèle
+        const collection = specs.model_collections[modelInput] || ''; // Valeur par défaut si non trouvée
         collectionInput.value = collection;
     }
 }
 
-// Fonction rendre actif le bouton cliqué
+// Fonction pour rendre un bouton actif
 function toggleActive(buttonNumber) {
-    // Récupère tous les boutons
+    // Sélectionne tous les boutons
     const buttons = document.querySelectorAll('button');
     
     // Supprime la classe 'active' de tous les boutons
     buttons.forEach(button => button.classList.remove('active'));
     
-    // Ajoute la classe 'active' au bouton cliqué
+    // Ajoute la classe 'active' au bouton sélectionné
     buttons[buttonNumber - 1].classList.add('active');
 }
 
@@ -151,24 +144,15 @@ async function sendRequest() {
     }
 
     var nombre_panneaux = 2;
-
     var transomXml = ''; // Initialiser le XML pour le poteau intermédiaire
 
-    // Si l'aspect est "1" et que la largeur est supérieure à 4000, on choisit le modèle avec une traverse
-    if (aspect === "1" && width > 4000) {
-        // si ce n'est pas déjà un modèle avec traverse
-        if (!model.endsWith("-M")) {
-            model = model + "-M"; // Ajouter le suffixe "-M" pour le modèle avec traverse
-        }
+    // Ajuster le modèle en fonction de l'aspect et de la largeur
+    if (aspect === "1" && width > 4000 && !model.endsWith("-M")) {
+        model += "-M";
     }
 
-    // Si l'aspect est "2", on modifie la traverse
-    if (aspect === "2") {
-        // si ce n'est pas déjà un modèle avec traverse
-        if (!model.endsWith("-M")) {
-            model = model + "-M"; // Ajouter le suffixe "-M" pour le modèle avec traverse
-        }
-
+    if (aspect === "2" && !model.endsWith("-M")) {
+        model += "-M";
         transomXml = `              <TRANSOM transom_id="1" leaf_id="1" filling_id="1" pos="W / 2" code="ALU ASPECT 2VTX" info="" masonry="1" />`;
     }
 
@@ -225,7 +209,6 @@ async function sendRequest() {
         }
 
         sashXml += transomXml; // Ajouter le poteau intermédiaire si nécessaire
-
         sashXml += `                    </SASH>\n`;
         return sashXml;
     };
